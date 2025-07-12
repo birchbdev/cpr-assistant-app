@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 final AudioPlayer _audioPlayer = AudioPlayer();
 bool _pulseOn = false;
@@ -19,6 +20,11 @@ class _CPRScreenState extends State<CPRScreen> {
   int _elapsedSeconds = 0;
   bool _audioEnabled = true;
   bool _visualEnabled = true;
+  double _x = 0.0;
+  double _y = 0.0;
+  double _z = 0.0;
+  late StreamSubscription<AccelerometerEvent> _accelSubscription;
+
 
   @override
   void initState() {
@@ -45,6 +51,17 @@ class _CPRScreenState extends State<CPRScreen> {
     //     _pulseOn = !_pulseOn; // Toggle visual cue
     //   });
     });
+
+
+      _accelSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+    setState(() {
+      _x = event.x;
+      _y = event.y;
+      _z = event.z;
+    });
+  });
+
+
   }
 
   @override
@@ -53,6 +70,7 @@ class _CPRScreenState extends State<CPRScreen> {
     super.dispose();
     _metronomeTimer.cancel();
     _audioPlayer.dispose();
+    _accelSubscription.cancel();
   }
 
   void _playTick() async {
@@ -88,6 +106,19 @@ class _CPRScreenState extends State<CPRScreen> {
               'Elapsed Time: ${_formatElapsedTime()}',
               style: const TextStyle(fontSize: 20),
             ),
+
+
+            const SizedBox(height: 20),
+            Text(
+              'Accelerometer',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text('X: ${_x.toStringAsFixed(2)}'),
+            Text('Y: ${_y.toStringAsFixed(2)}'),
+            Text('Z: ${_z.toStringAsFixed(2)}'),
+
+
+
             const SizedBox(height: 30),
 
 
