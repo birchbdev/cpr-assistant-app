@@ -18,7 +18,10 @@ class CPRApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const HomeScreen(),
-        '/cpr': (context) => const CPRScreen(),
+        '/cpr': (context) {
+          final patientType = ModalRoute.of(context)!.settings.arguments as PatientType;
+          return CPRScreen(patientType: patientType);
+        },
         '/settings': (context) => const SettingsScreen(),
       },
     );

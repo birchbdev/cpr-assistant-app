@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../screens/settings_screen.dart';
+
 class HomeScreen extends StatelessWidget {
     const HomeScreen({super.key});
 
@@ -17,7 +19,11 @@ class HomeScreen extends StatelessWidget {
                     children: [
                     ElevatedButton(
                         onPressed: () {
-                        Navigator.pushNamed(context, '/cpr');
+                        Navigator.pushNamed(
+                            context,
+                            '/cpr',
+                            arguments: PatientType.adult,
+                        );
                         },
                         style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(80),

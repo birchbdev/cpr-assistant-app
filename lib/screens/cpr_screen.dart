@@ -4,12 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import 'package:fl_chart/fl_chart.dart';
+
+import '../screens/settings_screen.dart';
+
 final AudioPlayer _audioPlayer = AudioPlayer();
 bool _pulseOn = false;
 late Timer _metronomeTimer;
 
 class CPRScreen extends StatefulWidget {
-  const CPRScreen({super.key});
+  final PatientType patientType;
+  const CPRScreen({super.key, required this.patientType});
 
   @override
   State<CPRScreen> createState() => _CPRScreenState();
@@ -25,10 +30,22 @@ class _CPRScreenState extends State<CPRScreen> {
   double _z = 0.0;
   late StreamSubscription<AccelerometerEvent> _accelSubscription;
 
+  double _lastZ = 0.0;
+  bool _compressionDetected = false;
+  int _compressionCount = 0;
+  final double _compressionThreshold = 1.5; // Placeholder for now
+
+  List<FlSpot> _zData = [];
+  int _timeCounter = 0;
+  final int _maxDataPoints = 50;
+
+  late PatientType _patientType;
+
 
   @override
   void initState() {
     super.initState();
+    _patientType = widget.patientType;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _elapsedSeconds++;
@@ -58,6 +75,25 @@ class _CPRScreenState extends State<CPRScreen> {
       _x = event.x;
       _y = event.y;
       _z = event.z;
+
+      double deltaZ = (_z - _lastZ).abs();
+
+      if (!_compressionDetected && deltaZ > _compressionThreshold) {
+        _compressionDetected = true;
+        _compressionCount++;
+      } else if (_compressionDetected && deltaZ < 0.5) {
+        _compressionDetected = false;
+      }
+
+      _lastZ = _z;
+
+
+      _zData.add(FlSpot(_timeCounter.toDouble(), _z));
+      _timeCounter++;
+
+      if (_zData.length > _maxDataPoints) {
+        _zData.removeAt(0);
+      }
     });
   });
 
@@ -117,12 +153,41 @@ class _CPRScreenState extends State<CPRScreen> {
             Text('Y: ${_y.toStringAsFixed(2)}'),
             Text('Z: ${_z.toStringAsFixed(2)}'),
 
+            const SizedBox(height: 20),
+            Text(
+              'Compressions: $_compressionCount',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+
+
+            SizedBox(
+              height: 150,
+              child: LineChart(
+                LineChartData(
+                  titlesData: FlTitlesData(show: false),
+                  gridData: FlGridData(show: false),
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _zData,
+                      isCurved: true,
+                      dotData: FlDotData(show: false),
+                      belowBarData: BarAreaData(show: false),
+                      color: Colors.greenAccent,
+                      barWidth: 3,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
 
 
             const SizedBox(height: 30),
 
 
-              Row( // does this go here?
+              Row( 
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
